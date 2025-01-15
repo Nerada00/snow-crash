@@ -1,6 +1,6 @@
 # snow-crash
 
-## level 0
+## level-0
 level00@SnowCrash:~$ find / -user "flag00" 2> /dev/null 
 /usr/sbin/john
 /rofs/usr/sbin/john
@@ -18,7 +18,7 @@ Don't forget to launch getflag !
 flag00@SnowCrash:~$ getflag
 Check flag.Here is your token : x24ti5gi3x0ol2eh4esiuxias
 
-## level 1
+## level-1
 
 level01@SnowCrash:~$ cat /etc/passwd
 
@@ -50,7 +50,7 @@ flag01@SnowCrash:~$ getflag
 Check flag.Here is your token : f2av5il02puano7naaf6adaaf
 flag01@SnowCrash:~$
 
-## level 2
+## level-2
 
 └─$ scp -P 4242 level02@192.168.1.36:/home/user/level02/level02.pcap .                           
 
@@ -73,7 +73,7 @@ Check flag.Here is your token : kooda2puivaav1idi4f57q8iq
 flag02@SnowCrash:~$ 
 
 
-## level 3
+## level-3
 
 Une fois l executable decompilé avec ghidra
 ```c
@@ -107,7 +107,7 @@ export PATH=/tmp
 
 flag='qi0maab88jeaj46qoumi7maus'
 
-## level4
+## level-4
 level04@SnowCrash:~$ cat level04.pl
 ```perl
 #!/usr/bin/perl
