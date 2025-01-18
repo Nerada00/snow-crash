@@ -60,19 +60,23 @@ flag01@SnowCrash:~$
 ```
 ### level-02
 
+On tombe sur un fichier de capture d'analyse reseau : level02.pcap
+Donc on lance Wireshark pour voir tout ça
+
 ```bash
 └─$ scp -P 4242 level02@192.168.1.36:/home/user/level02/level02.pcap .                           
-
-
 wireshark level02.pcap 
 ```
+on observe chaque packet et on recupere le resultat total en prenant la peine de verifier les valeurs hexa pour les doublons
+
 ft_wandr...NDRel.L0L(0d)(000d0a)(01)
 
-7f
+7f = del
+donc on supprime les caracteres en fonction des .
 
 ft_wandr...NDRel.L0L(0d)(000d0a)(01)
 ft_waNDReL0L(0d)(000d0a)(01) 
-ft_waNDReL0L
+voici le flag: ft_waNDReL0L
 ```bash
 level02@SnowCrash:~$ su flag02
 Password: 
