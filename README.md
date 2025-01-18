@@ -819,4 +819,62 @@ your token is 2A31L79asukciNyi8uppkEuSx
 
 ### level-14
 
+Aucune piste sur celui ci
+Donc on decide directement de prendre l'executable getflag, et de le passer sur ghidra
+On prend le dernier if, qui correspond au dernier level donc, le level 14.
+Puis comme tout a l'heure on y voit une comparaison.
+Donc on lance gdb
 
+```bash
+0x08048bb6 <+624>:	cmp    $0xbc6,%eax
+0x08048bbb <+629>:	je     0x8048de5 <main+1183>
+```
+on essaie de manipuler les adresses memoire mais cette fois ci le ptrace nous bloque.
+ptrace est un outil qui permet à un programme, comme un débogueur, de suivre et de contrôler l'exécution d'un autre programme, en accédant à ses registres, sa mémoire et ses appels systèmes.
+Donc on doit trouver un moyens de le bypass on trouve facilement via StackOverFlow
+https://stackoverflow.com/questions/33646927/bypassing-ptrace-in-gdb
+```
+catch syscall ptrace
+commands 1
+set ($eax) = 0
+continue
+end
+```
+on catch lapl systeme de ptrace pour manipuler sa valeur de retour eax a 0 pour specifier que tout fonctionne correctement
+```bash
+0x08048b02 <+444>:	mov    %eax,0x18(%esp)
+```
+Puis comme pour le level precedent on re manipule le contenue pour que lors de la comparaison il nous renvoie le flag
+
+```
+(gdb) b *0x08048b02
+Breakpoint 3 at 0x8048b02
+(gdb) commands 3
+Type commands for breakpoint(s) 3, one per line.
+End with a line saying just "end".
+>set $eax=0xbc6
+>continue
+>end
+(gdb) run
+Starting program: /bin/getflag
+
+Catchpoint 1 (call to syscall ptrace), 0xb7fdd428 in __kernel_vsyscall ()
+
+Catchpoint 1 (returned from syscall ptrace), 0xb7fdd428 in __kernel_vsyscall ()
+
+Breakpoint 3, 0x08048b02 in main ()
+
+Breakpoint 2, 0x08048bb6 in main ()
+Check flag.Here is your token : 7QiHafiNa3HVozsaXkawuYrTstxbpABHD8CPnHJ
+[Inferior 1 (process 5821) exited normally]
+```
+
+Dernier Flag: 7QiHafiNa3HVozsaXkawuYrTstxbpABHD8CPnHJ
+
+```bash
+level14@SnowCrash:~$ su flag14
+Password:
+Congratulation. Type getflag to get the key and send it to me the owner of this livecd :)
+flag14@SnowCrash:~$ getflag
+Check flag.Here is your token : 7QiHafiNa3HVozsaXkawuYrTstxbpABHD8CPnHJ
+```
