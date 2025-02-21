@@ -112,14 +112,19 @@ int main(int argc,char **argv,char **envp)
 
 on voit un appel systeme sur echo 
 on change le path pour executer la commande getflag
+```bash
 whereis getflag
-changement du path: echo '/bin/getflag' > '/tmp/echo'
+/bin/getflag
+```
+changement du path: 
+```bash
+echo '/bin/getflag' > '/tmp/echo'
 unset PATH
 export PATH=/tmp
 ./level03
 
 flag='qi0maab88jeaj46qoumi7maus'
-
+```
 ### level-04
 ```bash
 level04@SnowCrash:~$ cat level04.pl
